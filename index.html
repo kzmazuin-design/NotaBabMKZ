@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NotaBab MY - Penjana Nota Buku Teks Sekolah Malaysia</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- PDF.js client-side parser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Marked.js Markdown parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            myblue: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+              950: '#082f49'
+            },
+            myyellow: {
+              400: '#facc15',
+              500: '#eab308',
+              600: '#ca8a04'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+
+    /* Custom scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Malaysian Educational Prose Styling */
+    .note-prose h1 {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: #075985;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 0.4rem;
+    }
+    .note-prose h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #0369a1;
+      margin-top: 1.35rem;
+      margin-bottom: 0.5rem;
+    }
+    .note-prose h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-top: 1rem;
+      margin-bottom: 0.4rem;
+    }
+    .note-prose p {
+      margin-bottom: 0.85rem;
+      line-height: 1.68;
+      color: #334155;
+    }
+    .note-prose ul, .note-prose ol {
+      margin-left: 1.4rem;
+      margin-bottom: 1rem;
+    }
+    .note-prose li {
+      margin-bottom: 0.35rem;
+      line-height: 1.6;
+    }
+    .note-prose strong {
+      color: #0f172a;
+      font-weight: 700;
+    }
+    .note-prose table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.25rem 0;
+      font-size: 0.92rem;
+    }
+    .note-prose th {
+      background-color: #f1f5f9;
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid #cbd5e1;
+      font-weight: 700;
+      color: #0c4a6e;
+    }
+    .note-prose td {
+      padding: 0.65rem 0.85rem;
+      border: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+    .note-prose blockquote {
+      border-left: 4px solid #0284c7;
+      background-color: #f0f9ff;
+      padding: 0.75rem 1rem;
+      border-radius: 0 0.5rem 0.5rem 0;
+      margin: 1rem 0;
+      font-style: normal;
+    }
+
+    /* Print media setup */
+    @media print {
+      .no-print, header, nav, #progressCard, #emptyState, .lg\:col-span-5, #toast, #appModal, #printModal, #keySettingsModal {
+        display: none !important;
+      }
+      body {
+        background: white !important;
+        color: #0f172a !important;
+        font-size: 11pt !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      main {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .lg\:col-span-7 {
+        width: 100% !important;
+      }
+      #resultsContainer {
+        border: none !important;
+        box-shadow: none !important;
+      }
+      #printHandoutContainer {
+        display: block !important;
+      }
+      .page-break {
+        page-break-before: always;
+        break-before: page;
+      }
+      .avoid-break {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+    }
+    #printHandoutContainer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-sky-200">
+
+  <header class="bg-gradient-to-r from-myblue-950 via-myblue-900 to-myblue-800 text-white shadow-md sticky top-0 z-40 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-white text-myblue-900 font-extrabold flex items-center justify-center shadow-inner text-xl border-2 border-myyellow-400">
+          <span>NB</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl font-bold tracking-tight">NotaBab <span class="text-myyellow-400">MY</span></h1>
+            <span class="text-[10px] font-bold bg-myyellow-400/20 text-myyellow-300 border border-myyellow-400/30 px-2 py-0.5 rounded-full uppercase tracking-wider">KSSR • KSSM</span>
+          </div>
+          <p class="text-xs text-sky-200 hidden sm:block">Penjana Nota Padat & Terperinci 1 Bab Buku Teks KPM</p>
+        </div>
+      </div>
+
+      <!-- Header Controls -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Sample Chapter Button -->
+        <button id="sampleBtn" onclick="loadSampleChapter()" class="text-xs font-semibold bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 active:scale-95">
+          <svg class="w-4 h-4 text-myyellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          <span class="hidden md:inline">Cuba Contoh:</span> Sains T4
+        </button>
+
+        <!-- API Key Status / Settings -->
+        <button onclick="openKeyModal()" id="keyBadgeBtn" class="text-xs font-semibold bg-sky-900/60 hover:bg-sky-900 border border-sky-600/40 text-sky-200 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5" title="Tetapan Kunci API Gemini">
+          <svg class="w-4 h-4 text-sky-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+          <span class="hidden sm:inline">Kunci API</span>
+        </button>
+
+        <!-- Help Guide Button -->
+        <button onclick="openGuideModal()" class="p-2 text-sky-200 hover:text-white rounded-lg hover:bg-white/10 transition" title="Panduan Aplikasi">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- LEFT COLUMN: INPUT CONTROLS -->
+      <section class="lg:col-span-5 no-print space-y-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-5">
+            <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span class="flex h-6 w-6 rounded-full bg-sky-100 text-sky-800 items-center justify-center text-xs font-black">1</span>
+              Tetapan Bab & Kurikulum KPM
+            </h2>
+            <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">1 Bab Sahaja</span>
+          </div>
+
+          <!-- LEVEL SELECTION (Sekolah Rendah vs Sekolah Menengah) -->
+          <div class="mb-4">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Peringkat Sekolah</label>
+            <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+              <button type="button" id="btnRendah" onclick="setLevel('rendah')" class="py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5">
+                <span>🏫 Sekolah Rendah</span>
+              </button>
+              <button type="button" id="btnMenengah" onclick="setLevel('menengah')" class="py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all bg-white text-sky-900 shadow-sm flex items-center justify-center gap-1.5 border border-slate-200">
+                <span>🎓 Sekolah Menengah</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TAHUN / TINGKATAN SELECTOR -->
+          <div class="mb-4">
+            <label id="levelLabel" for="levelSelect" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Tingkatan</label>
+            <select id="levelSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none transition">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <!-- SUBJECT FIELD WITH ONE-CLICK BADGES -->
+          <div class="mb-4">
+            <label for="subjectInput" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Mata Pelajaran</label>
+            <input type="text" id="subjectInput" value="Sains" placeholder="Contoh: Sains, Matematik, Sejarah..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none transition mb-2">
+            
+            <div class="flex flex-wrap gap-1.5 text-xs">
+              <button type="button" onclick="setSubject('Sains')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-sky-100 hover:text-sky-800 text-slate-700 font-medium transition">Sains</button>
+              <button type="button" onclick="setSubject('Matematik')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-sky-100 hover:text-sky-800 text-slate-700 font-medium transition">Matematik</button>
+              <button type="button" onclick="setSubject('Sejarah')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-sky-100 hover:text-sky-800 text-slate-700 font-medium transition">Sejarah</button>
+              <button type="button" onclick="setSubject('Geografi')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-sky-100 hover:text-sky-800 text-slate-700 font-medium transition">Geografi</button>
+              <button type="button" onclick="setSubject('Bahasa Melayu')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-sky-100 hover:text-sky-800 text-slate-700 font-medium transition">B. Melayu</button>
+              <button type="button" onclick="setSubject('Pendidikan Islam')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-sky-100 hover:text-sky-800 text-slate-700 font-medium transition">P. Islam</button>
+            </div>
+          </div>
+
+          <!-- LANGUAGE & NOTE DEPTH CONFIG -->
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div>
+              <label for="outputLang" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Bahasa Output</label>
+              <select id="outputLang" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                <option value="Bahasa Melayu" selected>Bahasa Melayu</option>
+                <option value="English">English</option>
+              </select>
+            </div>
+            <div>
+              <label for="noteDepth" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Kedalaman Nota</label>
+              <select id="noteDepth" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                <option value="Focused">Focused (Ringkas)</option>
+                <option value="Comprehensive" selected>Comprehensive (Lengkap)</option>
+                <option value="Very Comprehensive">Very Comprehensive (Mendalam)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- MODULE OPTIONS -->
+          <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 mb-5 space-y-2.5">
+            <span class="block text-[11px] font-bold uppercase text-slate-500">Modul Tambahan</span>
+            <label class="flex items-center gap-2.5 cursor-pointer text-xs sm:text-sm text-slate-700 font-medium">
+              <input type="checkbox" id="optRecall" checked class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300">
+              <span>Sertakan <strong>Active Recall Questions</strong></span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer text-xs sm:text-sm text-slate-700 font-medium">
+              <input type="checkbox" id="optExam" checked class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300">
+              <span>Sertakan <strong>10 Soalan Format Peperiksaan (UASA / SPM)</strong></span>
+            </label>
+          </div>
+
+          <!-- CHAPTER UPLOAD DROP ZONE -->
+          <div class="border-t border-slate-100 pt-4">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                Muat Naik 1 Bab Buku Teks (PDF / Teks)
+              </h3>
+              <span id="charCount" class="text-[11px] text-slate-400 font-mono font-semibold">0 perkataan</span>
+            </div>
+
+            <div id="dropZone" class="border-2 border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 hover:bg-sky-50/50 rounded-xl p-4 text-center cursor-pointer transition relative group">
+              <input type="file" id="fileInput" accept=".pdf,.txt,.md,.doc" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10">
+              <div class="flex flex-col items-center justify-center space-y-1.5">
+                <div class="w-10 h-10 rounded-full bg-sky-100 group-hover:bg-sky-200 text-sky-700 flex items-center justify-center transition">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                </div>
+                <p class="text-xs sm:text-sm font-bold text-slate-700">Tarik & Lepas fail PDF Bab Buku Teks di sini</p>
+                <p class="text-[11px] text-slate-500">atau klik untuk pilih fail PDF / dokumen (Disyorkan 1 Bab)</p>
+              </div>
+            </div>
+
+            <!-- Direct Text Box -->
+            <div class="mt-3">
+              <div class="flex items-center justify-between text-xs text-slate-500 mb-1">
+                <span>Atau semak / tampal teks bab di sini:</span>
+                <button type="button" onclick="clearChapterText()" class="text-slate-400 hover:text-rose-600 underline text-[11px]">Kosongkan</button>
+              </div>
+              <textarea id="chapterRawText" rows="4" placeholder="Teks bab yang diekstrak daripada PDF atau teks tampalan..." class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-700 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none transition resize-y"></textarea>
+            </div>
+          </div>
+
+          <!-- GENERATE ACTION BUTTON -->
+          <div class="mt-5">
+            <button type="button" id="btnGenerate" onclick="startGenerationWorkflow()" class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-myblue-800 via-sky-600 to-myblue-700 hover:from-myblue-900 hover:to-sky-800 text-white font-bold text-base shadow-lg shadow-sky-600/30 flex items-center justify-center gap-2 transition transform active:scale-[0.99]">
+              <svg class="w-5 h-5 text-myyellow-400 animate-pulse" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
+              <span>Jana Nota Komprehensif</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: RESULTS & OUTPUT DISPLAY -->
+      <section class="lg:col-span-7 space-y-6">
+
+        <!-- STEPPER PROGRESS CARD -->
+        <div id="progressCard" class="hidden bg-white rounded-2xl shadow-sm border border-sky-100 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-6 h-6 border-2 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
+              <div>
+                <h3 id="progressHeading" class="text-sm font-bold text-slate-800">Sedang Memproses Bab Buku Teks...</h3>
+                <p id="progressSubtitle" class="text-xs text-slate-500">Menganalisis teks bab berpandukan kurikulum KPM.</p>
+              </div>
+            </div>
+            <span id="progressPercentage" class="text-sm font-black text-sky-700 font-mono">15%</span>
+          </div>
+
+          <!-- 4 Visual Steps -->
+          <div class="grid grid-cols-4 gap-2 pt-2">
+            <div id="stepBox1" class="border rounded-xl p-2.5 text-center bg-sky-50 border-sky-400 transition-all">
+              <div class="text-[11px] font-bold text-sky-800">Langkah 1</div>
+              <div class="text-[10px] text-sky-700 leading-tight">Membaca Bab</div>
+            </div>
+            <div id="stepBox2" class="border rounded-xl p-2.5 text-center bg-slate-50 border-slate-200 text-slate-400 transition-all">
+              <div class="text-[11px] font-bold">Langkah 2</div>
+              <div class="text-[10px] leading-tight">Memeta Struktur</div>
+            </div>
+            <div id="stepBox3" class="border rounded-xl p-2.5 text-center bg-slate-50 border-slate-200 text-slate-400 transition-all">
+              <div class="text-[11px] font-bold">Langkah 3</div>
+              <div class="text-[10px] leading-tight">Menulis Nota</div>
+            </div>
+            <div id="stepBox4" class="border rounded-xl p-2.5 text-center bg-slate-50 border-slate-200 text-slate-400 transition-all">
+              <div class="text-[11px] font-bold">Langkah 4</div>
+              <div class="text-[10px] leading-tight">Audit Sumber</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- INITIAL EMPTY STATE -->
+        <div id="emptyState" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-8 sm:p-12 text-center">
+          <div class="w-16 h-16 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-sky-100 shadow-inner">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-slate-800 mb-2">Selamat Datang ke NotaBab MY</h3>
+          <p class="text-sm text-slate-600 max-w-md mx-auto mb-6 leading-relaxed">
+            Muat naik satu fail bab buku teks anda (PDF/Teks), pilih Tahun atau Tingkatan, dan AI akan menjana nota lengkap berstruktur mengikut subtopik asal tanpa mereka fakta luar.
+          </p>
+          <div class="inline-flex flex-col sm:flex-row gap-3 items-center justify-center">
+            <button onclick="loadSampleChapter()" class="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs sm:text-sm shadow transition flex items-center gap-2 active:scale-95">
+              <svg class="w-4 h-4 text-myyellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              Cuba Bab Contoh: Sains Tingkatan 4 (Bantuan Kecemasan)
+            </button>
+            <span class="text-xs text-slate-400">atau muat naik bab sendiri di sebelah kiri</span>
+          </div>
+        </div>
+
+        <!-- MAIN RESULTS CONTAINER (TABS & ACTIONS) -->
+        <div id="resultsContainer" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+          
+          <!-- TOP TOOLBAR -->
+          <div class="p-4 sm:p-5 bg-slate-50/90 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 no-print">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="badgeLevel" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 border border-sky-200">Tingkatan 4</span>
+              <span id="badgeSubject" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200">Sains</span>
+              <span id="badgeChapter" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-200 text-slate-700 truncate max-w-[200px]">Bab 2</span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <button onclick="copyCurrentTabContent()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition flex items-center gap-1.5 active:scale-95" title="Salin Kandungan">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                <span class="hidden sm:inline">Salin</span>
+              </button>
+
+              <button onclick="downloadNotesDoc()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition flex items-center gap-1.5 active:scale-95" title="Muat Turun Nota Markdown">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span class="hidden sm:inline">Muat Turun</span>
+              </button>
+
+              <button onclick="openPrintModal()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-50 border border-sky-200 hover:bg-sky-100 text-sky-800 transition flex items-center gap-1.5 active:scale-95" title="Cetak Format Pelajar">
+                <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                <span>Cetak</span>
+              </button>
+
+              <button onclick="startGenerationWorkflow()" class="p-1.5 text-slate-500 hover:text-sky-700 rounded-lg hover:bg-slate-100 transition" title="Jana Semula">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 OUTPUT TABS -->
+          <div class="border-b border-slate-200 bg-white no-print">
+            <nav class="flex overflow-x-auto text-sm font-bold text-slate-600">
+              <button onclick="switchTab('tabVerified')" id="tabNav-tabVerified" class="tab-button px-4 py-3 border-b-2 border-sky-600 text-sky-700 flex items-center gap-2 whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Verified Notes</span>
+              </button>
+
+              <button onclick="switchTab('tabRevision')" id="tabNav-tabRevision" class="tab-button px-4 py-3 border-b-2 border-transparent hover:text-slate-900 flex items-center gap-2 whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>Revision (High-Yield)</span>
+              </button>
+
+              <button onclick="switchTab('tabPractice')" id="tabNav-tabPractice" class="tab-button px-4 py-3 border-b-2 border-transparent hover:text-slate-900 flex items-center gap-2 whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                <span>Practice & Exam</span>
+              </button>
+
+              <button onclick="switchTab('tabAudit')" id="tabNav-tabAudit" class="tab-button px-4 py-3 border-b-2 border-transparent hover:text-slate-900 flex items-center gap-2 whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <span>Source Check (Audit)</span>
+              </button>
+            </nav>
+          </div>
+
+          <!-- TAB 1: VERIFIED NOTES -->
+          <div id="tabVerified" class="tab-pane p-6 sm:p-8 note-prose min-h-[400px]">
+            <!-- Dynamic verified notes -->
+          </div>
+
+          <!-- TAB 2: REVISION -->
+          <div id="tabRevision" class="tab-pane hidden p-6 sm:p-8 space-y-6">
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mb-4">
+              <h4 class="text-sm font-bold text-amber-800 flex items-center gap-2">
+                <span>⚡ Modul Ulang Kaji Pantas (High-Yield Revision)</span>
+              </h4>
+              <p class="text-xs text-amber-700">Diringkaskan khusus untuk persediaan sebelum ujian sekolah.</p>
+            </div>
+            <div id="revisionContent" class="note-prose">
+              <!-- Rendered revision Markdown -->
+            </div>
+          </div>
+
+          <!-- TAB 3: PRACTICE -->
+          <div id="tabPractice" class="tab-pane hidden p-6 sm:p-8 space-y-8">
+            <!-- Active Recall Flashcards -->
+            <div>
+              <div class="flex items-center justify-between mb-4 border-b pb-2">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                  <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs flex items-center justify-center font-bold">Q</span>
+                  Active Recall Flashcards (Soal & Jawab Kendiri)
+                </h3>
+                <span class="text-xs text-slate-500">Klik kad untuk lihat jawapan</span>
+              </div>
+              <div id="activeRecallList" class="space-y-3">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- 10 Exam Questions -->
+            <div class="pt-6 border-t border-slate-200">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h3 class="text-base font-bold text-slate-800">10 Soalan Format Peperiksaan Sekolah</h3>
+                  <p class="text-xs text-slate-500">Format Ujian Akhir Sesi Akademik (UASA) / SPM</p>
+                </div>
+                <button onclick="toggleAnswerKey()" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-800 transition">
+                  <span id="btnAnswerKeyText">Tunjukkan Skema Jawapan</span>
+                </button>
+              </div>
+
+              <div id="examQuestionsList" class="space-y-4">
+                <!-- Questions inserted here -->
+              </div>
+
+              <!-- Answer key drawer -->
+              <div id="answerKeyContainer" class="hidden mt-6 p-5 bg-emerald-50 rounded-2xl border border-emerald-200">
+                <h4 class="text-sm font-bold text-emerald-900 mb-3 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  Skema Jawapan Rasmi Buku Teks
+                </h4>
+                <div id="examAnswersContent" class="text-xs sm:text-sm text-emerald-950 space-y-3 font-mono">
+                  <!-- Answers populated here -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: AUDIT SOURCE CHECK -->
+          <div id="tabAudit" class="tab-pane hidden p-6 sm:p-8 space-y-6">
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <h4 class="text-sm font-bold text-slate-800 mb-1 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                Integriti & Pengesahan Sumber Dokumen
+              </h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Prinsip tegas: Bab buku teks yang dimuat naik adalah <strong>autoriti mutlak</strong>. Nota tidak mereka-reka objektif pembelajaran luar, standard kurikulum tambahan, atau contoh ciptaan sendiri.
+              </p>
+            </div>
+
+            <div id="auditLogContent" class="space-y-4">
+              <!-- Audit report items -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2">
+    <span id="toastMessage">Tindakan berjaya!</span>
+  </div>
+
+  <!-- APPLICATION MESSAGE MODAL (REPLACES ALERT) -->
+  <div id="appModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-fade-in">
+      <div class="flex items-start gap-3">
+        <div id="modalIconContainer" class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div class="flex-grow">
+          <h3 id="modalTitle" class="text-base font-bold text-slate-800">Pemberitahuan</h3>
+          <p id="modalDescription" class="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">Mesej sistem.</p>
+        </div>
+      </div>
+      <div id="modalCustomActions" class="hidden pt-2 border-t flex items-center justify-end gap-2">
+        <!-- Optional extra buttons -->
+      </div>
+      <div id="modalDefaultActions" class="pt-2 border-t text-right">
+        <button onclick="closeAppModal()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API KEY SETTINGS MODAL (FOR RUNNING OFFLINE / DOWNLOADED FILE) -->
+  <div id="keySettingsModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+          </div>
+          <h3 class="text-base font-bold text-slate-800">Kunci API Gemini (Google AI)</h3>
+        </div>
+        <button onclick="closeKeyModal()" class="text-slate-400 hover:text-slate-700">✕</button>
+      </div>
+
+      <div class="text-xs text-slate-600 space-y-2">
+        <p>Jika anda menggunakan fail ini di luar platform (fail muat turun pada PC sendiri), masukkan kunci API Google Gemini percuma anda di sini.</p>
+        <p class="text-[11px] text-slate-500 bg-slate-50 p-2 rounded-lg border">
+          Dapatkan secara percuma di <a href="https://aistudio.google.com" target="_blank" class="text-sky-600 font-bold underline">aistudio.google.com</a>. Kunci disimpan secara selamat dalam memori sesi pelayar anda sahaja.
+        </p>
+      </div>
+
+      <div>
+        <label for="apiKeyInput" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Gemini API Key</label>
+        <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-mono text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none transition">
+      </div>
+
+      <div class="pt-3 border-t flex items-center justify-between gap-2">
+        <button onclick="clearSavedKey()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-rose-600 font-medium">Padam Kunci</button>
+        <div class="flex gap-2">
+          <button onclick="closeKeyModal()" class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">Batal</button>
+          <button onclick="saveKeySettings()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition">Simpan Kunci</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HELP & GUIDE MODAL -->
+  <div id="guideModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="text-base font-bold text-slate-800">Panduan Penggunaan NotaBab MY</h3>
+        <button onclick="closeGuideModal()" class="text-slate-400 hover:text-slate-700">✕</button>
+      </div>
+      <div class="text-xs sm:text-sm text-slate-600 space-y-2.5 leading-relaxed">
+        <p><strong>1. Muat Naik 1 Bab Sahaja:</strong> Pastikan anda memuat naik bab khusus (contohnya Bab 2 sahaja, bukan seluruh buku teks 300 muka surat) untuk hasil nota yang paling mendalam dan tepat.</p>
+        <p><strong>2. Pelarasan Aras Bahasa:</strong> Memilih <em>Sekolah Rendah (Tahun 1-6)</em> akan menghasilkan penerangan lebih santun dan mudah difahami, manakala <em>Sekolah Menengah (Tingkatan 1-5)</em> mengekalkan terminologi saintifik dan teknikal lengkap KPM.</p>
+        <p><strong>3. Verifikasi Mutlak:</strong> NotaBab MY tidak membenarkan maklumat luar disuntik ke dalam nota. Sebarang fakta yang tiada sokongan dalam teks ditandakan sebagai <em>Source unclear</em> atau disaring keluar.</p>
+      </div>
+      <div class="pt-3 border-t text-right">
+        <button onclick="closeGuideModal()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition">Faham, Teruskan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRINT OPTIONS MODAL -->
+  <div id="printModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-800">Cetak Modul Pelajar NotaBab MY</h3>
+            <p class="text-xs text-slate-500">Pilih format lembaran kerja atau modul yang ingin dicetak</p>
+          </div>
+        </div>
+        <button onclick="closePrintModal()" class="text-slate-400 hover:text-slate-700 p-1">✕</button>
+      </div>
+
+      <div class="space-y-2.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Kandungan Cetakan</label>
+        <div class="grid grid-cols-1 gap-2 text-xs sm:text-sm">
+          <label class="flex items-center gap-3 p-3 rounded-xl border border-sky-200 bg-sky-50/50 hover:bg-sky-50 cursor-pointer transition">
+            <input type="radio" name="printScope" value="all" checked class="w-4 h-4 text-sky-600 focus:ring-sky-500">
+            <div>
+              <div class="font-bold text-slate-800">Modul Lengkap (Disyorkan)</div>
+              <div class="text-[11px] text-slate-500">Nota Disahkan + Ulang Kaji Pantas + 10 Soalan & Skema</div>
+            </div>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <input type="radio" name="printScope" value="notes" class="w-4 h-4 text-sky-600 focus:ring-sky-500">
+            <div>
+              <div class="font-bold text-slate-800">Nota Disahkan Sahaja (Verified Notes)</div>
+              <div class="text-[11px] text-slate-500">Nota rujukan utama mengikut subtopik asal</div>
+            </div>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <input type="radio" name="printScope" value="practice" class="w-4 h-4 text-sky-600 focus:ring-sky-500">
+            <div>
+              <div class="font-bold text-slate-800">Lembaran Ujian & Latihan Sahaja</div>
+              <div class="text-[11px] text-slate-500">10 soalan peperiksaan bertulis (tanpa skema jawapan)</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+        <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
+          <input type="checkbox" id="printStudentMeta" checked class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500">
+          <span>Sertakan petak butiran pelajar (Nama, Kelas, Tarikh) di kepala surat</span>
+        </label>
+      </div>
+
+      <div class="pt-2 flex flex-col sm:flex-row items-center justify-end gap-2 border-t">
+        <button onclick="downloadPrintableHtml()" class="w-full sm:w-auto px-3.5 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition flex items-center justify-center gap-1.5" title="Simpan sebagai fail HTML siap cetak">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span>Simpan Fail Cetak</span>
+        </button>
+
+        <button onclick="openPrintInNewTab()" class="w-full sm:w-auto px-3.5 py-2.5 rounded-xl border border-sky-300 bg-sky-50 hover:bg-sky-100 text-sky-800 font-semibold text-xs transition flex items-center justify-center gap-1.5" title="Buka paparan cetak dalam tetingkap baharu">
+          <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          <span>Tab Baharu</span>
+        </button>
+
+        <button onclick="executePrint()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          <span>Cetak Sekarang</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEDICATED PRINT CONTAINER -->
+  <div id="printHandoutContainer" class="p-8 text-slate-900 bg-white"></div>
+
+  <script>
+    /* In-memory State */
+    let currentLevelType = 'menengah';
+    let currentGrade = 'Tingkatan 4';
+    let currentRawContent = '';
+    let inMemoryApiKey = '';
+    
+    let generatedResults = {
+      verifiedNotesMarkdown: '',
+      revisionMarkdown: '',
+      activeRecall: [],
+      examQuestions: [],
+      auditItems: []
+    };
+
+    // Configure PDF.js worker
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    // Sample Chapter Text: Tingkatan 4 Sains Bab 2 (Bantuan Kecemasan)
+    const SAMPLE_CHAPTER_TEXT = `BUKU TEKS SAINS TINGKATAN 4 (KSSM)
+BAB 2: BANTUAN KECEMASAN
+
+Standard Kandungan:
+2.1 Resusitasi Kardiopulmonari (Cardiopulmonary Resuscitation, CPR)
+2.2 Heimlich Maneuver
+
+Objektif Pembelajaran:
+- Menyatakan maksud CPR dan situasi yang memerlukan CPR.
+- Mendemonstrasikan langkah-langkah CPR bagi orang dewasa.
+- Menerangkan kepentingan CPR dalam menyelamatkan nyawa.
+- Menerangkan maksud Heimlich Maneuver dan situasi yang memerlukannya.
+- Mendemonstrasikan kaedah Heimlich Maneuver.
+
+2.1 RESUSITASI KARDIOPULMONARI (CPR)
+Resusitasi Kardiopulmonari (CPR) ialah suatu prosedur kecemasan yang menggabungkan teknik tekanan dada dan hembusan nafas ke dalam mulut mangsa untuk memulihkan denyutan jantung dan pernafasan seseorang individu secara sementara.
+
+Keadaan yang Memerlukan CPR:
+CPR diberikan jika seseorang individu didapati:
+1. Tidak bernafas atau pernafasannya terhenti.
+2. Tiada denyutan nadi atau tindak balas (hilang kesedaran).
+3. Mengalami serangan jantung atau renjatan elektrik, lemas, atau panahan petir.
+
+Langkah-Langkah Menjalankan CPR (Orang Dewasa):
+1. Periksa respons mangsa: Tepuk bahu mangsa dan tanya dengan jelas, "Adakah anda okay?".
+2. Minta bantuan: Jika tiada tindak balas, hubungi talian kecemasan 999 dengan segera atau minta orang sekeliling menghubungi ambulans serta dapatkan Automated External Defibrillator (AED).
+3. Buka saluran pernafasan: Baringkan mangsa secara terlentang pada permukaan yang rata dan keras. Dongakkan kepala mangsa dan angkat dagunya perlahan-lahan.
+4. Tekanan dada:
+   - Letakkan tumit salah satu tapak tangan di bahagian tengah dada mangsa (tulang sternum).
+   - Tindihkan tangan sebelah lagi dan kunci jari-jemari.
+   - Luruskan siku dan condongkan badan ke hadapan supaya bahu tegak di atas tangan.
+   - Tekan dada sedalam sekurang-kurangnya 5 cm tetapi tidak melebihi 6 cm.
+   - Lakukan tekanan dada pada kadar 100 hingga 120 tekanan seminit.
+5. Bantuan pernafasan:
+   - Picit hidung mangsa dan buka mulutnya.
+   - Hembuskan nafas ke dalam mulut mangsa selama 1 saat setiap hembusan sehingga dada mangsa kelihatan naik.
+   - Nisbah tekanan dada kepada hembusan nafas ialah 30 tekanan dada diikuti oleh 2 hembusan nafas (30:2).
+   - Ulangi kitaran ini secara berterusan sehingga bantuan perubatan tiba atau mangsa pulih kesedaran.
+
+Kepentingan CPR:
+Tekanan dada menghasilkan peredaran darah beroksigen secara buatan ke seluruh badan, terutamanya ke otak. Sekiranya mangsa mengalami kerosakan otak kekal (berlaku selepas 4 hingga 6 minit tanpa oksigen), CPR dapat memanjangkan tempoh hidup sel-sel otak sebelum bantuan paramedik tiba.
+
+2.2 HEIMLICH MANEUVER
+Heimlich Maneuver ialah bantuan kecemasan yang dilakukan untuk menyelamatkan seseorang individu yang tercekik. Tercekik berlaku apabila sesuatu objek asing, seperti ketulan makanan atau bendasing, tersumbat di dalam saluran pernafasan (trakea).
+
+Tanda-Tanda Individu Tercekik:
+1. Memegang leher dengan kedua-dua belah tangan (tanda universal tercekik).
+2. Tidak boleh bercakap, batuk, atau bernafas dengan normal.
+3. Kulit, bibir, dan kuku kelihatan kebiru-biruan atau kehitaman (sianosis).
+4. Kelihatan panik dan sukar menarik nafas.
+
+Kaedah Melakukan Heimlich Maneuver (Mangsa Sedar):
+1. Berdiri di belakang mangsa dan condongkan badan mangsa sedikit ke hadapan.
+2. Kelilingkan tangan anda di sekeliling pinggang mangsa.
+3. Genggam salah satu tangan anda dengan ibu jari berada di bahagian dalam, dan letakkannya di antara pusat mangsa dengan bahagian bawah tulang rusuk (hulu hati).
+4. Letakkan tangan sebelah lagi di atas genggaman tangan tersebut.
+5. Tekan ke dalam dan sentak ke atas dengan kuat dan pantas secara berulang-ulang sehingga bendasing terkeluar daripada saluran pernafasan mangsa.
+
+Kaedah Jika Diri Sendiri Tercekik:
+Jika tiada orang lain di sekeliling, individu boleh meletakkan tangan di bahagian hulu hati seperti di atas atau menekan bahagian perut ke objek keras paras pinggang seperti penyandar kerusi atau meja, kemudian menolak ke dalam dan ke atas.
+
+Perbandingan CPR dan Heimlich Maneuver:
+- CPR dilakukan untuk mangsa yang tidak responsif, tiada denyutan nadi, atau pernafasan terhenti akibat kegagalan jantung/lemas.
+- Heimlich Maneuver dilakukan khusus untuk mangsa yang tercekik oleh objek asing di saluran pernafasan.`;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderGradeOptions();
+      setupDragAndDrop();
+      setupFileInput();
+
+      const rawTextEl = document.getElementById('chapterRawText');
+      rawTextEl.addEventListener('input', () => {
+        updateWordCount(rawTextEl.value);
+      });
+    });
+
+    function setLevel(type) {
+      currentLevelType = type;
+      const btnRendah = document.getElementById('btnRendah');
+      const btnMenengah = document.getElementById('btnMenengah');
+      const label = document.getElementById('levelLabel');
+
+      if (type === 'rendah') {
+        btnRendah.className = 'py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all bg-white text-sky-900 shadow-sm flex items-center justify-center gap-1.5 border border-slate-200';
+        btnMenengah.className = 'py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5';
+        label.textContent = 'Tahun (Sekolah Rendah)';
+      } else {
+        btnMenengah.className = 'py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all bg-white text-sky-900 shadow-sm flex items-center justify-center gap-1.5 border border-slate-200';
+        btnRendah.className = 'py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5';
+        label.textContent = 'Tingkatan (Sekolah Menengah)';
+      }
+      renderGradeOptions();
+    }
+
+    function renderGradeOptions() {
+      const select = document.getElementById('levelSelect');
+      select.innerHTML = '';
+      if (currentLevelType === 'rendah') {
+        for (let i = 1; i <= 6; i++) {
+          const opt = document.createElement('option');
+          opt.value = `Tahun ${i}`;
+          opt.textContent = `Tahun ${i}`;
+          if (i === 5) opt.selected = true;
+          select.appendChild(opt);
+        }
+      } else {
+        for (let i = 1; i <= 5; i++) {
+          const opt = document.createElement('option');
+          opt.value = `Tingkatan ${i}`;
+          opt.textContent = `Tingkatan ${i}`;
+          if (i === 4) opt.selected = true;
+          select.appendChild(opt);
+        }
+      }
+      currentGrade = select.value;
+      select.onchange = (e) => currentGrade = e.target.value;
+    }
+
+    function setSubject(subject) {
+      document.getElementById('subjectInput').value = subject;
+    }
+
+    function updateWordCount(text) {
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      document.getElementById('charCount').textContent = `${words} perkataan`;
+    }
+
+    function clearChapterText() {
+      document.getElementById('chapterRawText').value = '';
+      currentRawContent = '';
+      updateWordCount('');
+      showToast('Kandungan bab telah dikosongkan.');
+    }
+
+    function loadSampleChapter() {
+      setLevel('menengah');
+      document.getElementById('levelSelect').value = 'Tingkatan 4';
+      currentGrade = 'Tingkatan 4';
+      document.getElementById('subjectInput').value = 'Sains';
+      document.getElementById('chapterRawText').value = SAMPLE_CHAPTER_TEXT;
+      currentRawContent = SAMPLE_CHAPTER_TEXT;
+      updateWordCount(SAMPLE_CHAPTER_TEXT);
+      showToast('Bab contoh Sains Tingkatan 4 telah dimuatkan!');
+    }
+
+    function setupDragAndDrop() {
+      const dropZone = document.getElementById('dropZone');
+      ['dragenter', 'dragover'].forEach(name => {
+        dropZone.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add('border-sky-500', 'bg-sky-50');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(name => {
+        dropZone.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('border-sky-500', 'bg-sky-50');
+        });
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        if (dt.files && dt.files.length > 0) {
+          processUploadedFile(dt.files[0]);
+        }
+      });
+    }
+
+    function setupFileInput() {
+      const fileInput = document.getElementById('fileInput');
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          processUploadedFile(e.target.files[0]);
+        }
+      });
+    }
+
+    async function processUploadedFile(file) {
+      showToast(`Membaca fail: ${file.name}...`);
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          let fullText = '';
+          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += `\n--- Muka Surat ${pageNum} ---\n` + pageText;
+          }
+
+          if (!fullText.trim()) {
+            openAppModal('Format PDF Tidak Disokong', 'PDF ini mungkin imej imbasan tanpa lapisan teks. Sila salin atau tampal teks bab secara langsung.');
+            return;
+          }
+
+          document.getElementById('chapterRawText').value = fullText;
+          currentRawContent = fullText;
+          updateWordCount(fullText);
+          showToast(`Berjaya membaca ${pdf.numPages} muka surat PDF!`);
+        } catch (err) {
+          console.error(err);
+          openAppModal('Ralat Membaca PDF', 'Tidak dapat mengekstrak teks daripada fail PDF ini. Sila cuba salin dan tampal teks bab ke dalam petak.');
+        }
+      } else {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const text = event.target.result;
+          document.getElementById('chapterRawText').value = text;
+          currentRawContent = text;
+          updateWordCount(text);
+          showToast('Teks bab berjaya dimuat naik!');
+        };
+        reader.readAsText(file);
+      }
+    }
+
+    // Generic Gemini 3 Flash API Caller
+    async function callGeminiApi(systemPrompt, userQuery, jsonSchema = null) {
+      // Prioritize in-memory user key, fallback to empty string for Canvas automatic injection
+      const activeKey = inMemoryApiKey || "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${activeKey}`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] }
+      };
+
+      if (jsonSchema) {
+        payload.generationConfig = {
+          responseMimeType: "application/json",
+          responseSchema: jsonSchema
+        };
+      }
+
+      let attempts = 0;
+      const maxAttempts = 3;
+      let delay = 1000;
+
+      while (attempts < maxAttempts) {
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) {
+            if (response.status === 429 && attempts < maxAttempts - 1) {
+              await new Promise(res => setTimeout(res, delay));
+              delay *= 2;
+              attempts++;
+              continue;
+            }
+            const errBody = await response.text();
+            throw new Error(`Gemini API HTTP ${response.status}: ${errBody || response.statusText}`);
+          }
+
+          const result = await response.json();
+          const candidate = result.candidates?.[0];
+          if (!candidate?.content?.parts?.[0]?.text) {
+            throw new Error('Respons AI tidak mengandungi teks kandungan yang sah.');
+          }
+
+          return candidate.content.parts[0].text;
+        } catch (err) {
+          attempts++;
+          if (attempts >= maxAttempts) throw err;
+          await new Promise(res => setTimeout(res, delay));
+          delay *= 2;
+        }
+      }
+    }
+
+    async function startGenerationWorkflow() {
+      const rawText = document.getElementById('chapterRawText').value.trim();
+      if (!rawText) {
+        openAppModal('Bab Belum Dimuat Naik', 'Sila muat naik fail PDF bab buku teks atau tampal teks bab terlebih dahulu sebelum menekan butang Jana.');
+        return;
+      }
+
+      currentRawContent = rawText;
+      const subject = document.getElementById('subjectInput').value.trim() || 'Sains';
+      const grade = document.getElementById('levelSelect').value;
+      const language = document.getElementById('outputLang').value;
+      const depth = document.getElementById('noteDepth').value;
+      const includeRecall = document.getElementById('optRecall').checked;
+      const includeExam = document.getElementById('optExam').checked;
+
+      // Update Badges
+      document.getElementById('badgeLevel').textContent = grade;
+      document.getElementById('badgeSubject').textContent = subject;
+      
+      // UI Transitions
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('resultsContainer').classList.add('hidden');
+      document.getElementById('progressCard').classList.remove('hidden');
+
+      const btnGen = document.getElementById('btnGenerate');
+      btnGen.disabled = true;
+      btnGen.classList.add('opacity-50', 'cursor-not-allowed');
+
+      try {
+        // STEP 1: CHAPTER MAPPING
+        updateProgress(1, '20%', 'Membaca & Memetakan Bab...', 'Mengenal pasti tajuk bab, objektif asal, istilah, dan hierarki subtopik.');
+        const mappingResult = await executeStep1Mapping(rawText, subject, grade);
+
+        // STEP 2: COMPREHENSIVE NOTES
+        updateProgress(2, '55%', 'Menulis Nota Komprehensif...', `Mengadaptasi tahap bahasa bagi ${grade} (${language}) mengikut subtopik asal.`);
+        const notesResult = await executeStep2Notes(rawText, mappingResult, subject, grade, language, depth, includeRecall, includeExam);
+
+        // STEP 3: SOURCE VERIFICATION & FACT CHECKING
+        updateProgress(4, '85%', 'Memverifikasi Sumber & Integriti...', 'Menyemak fakta dengan teks asal. Memastikan tiada fakta rekaan atau istilah palsu.');
+        const verificationAudit = await executeStep3Verification(rawText, notesResult);
+
+        updateProgress(4, '100%', 'Nota Sedia!', 'Penyusunan nota lengkap selesai.');
+        await new Promise(r => setTimeout(r, 350));
+
+        // Display results
+        renderAllOutputs(notesResult, verificationAudit, subject, grade);
+
+        document.getElementById('progressCard').classList.add('hidden');
+        document.getElementById('resultsContainer').classList.remove('hidden');
+        switchTab('tabVerified');
+        showToast('Nota bab berjaya dijana dengan pengesahan sumber!');
+      } catch (error) {
+        console.error('Generation Error:', error);
+        handleGenerationError(error, rawText);
+      } finally {
+        btnGen.disabled = false;
+        btnGen.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function handleGenerationError(error, rawText) {
+      document.getElementById('progressCard').classList.add('hidden');
+      
+      const errMsg = error.message || '';
+      const isAuthError = errMsg.includes('403') || errMsg.includes('400') || errMsg.includes('API key');
+      const isSample = rawText.includes('RESUSITASI KARDIOPULMONARI') || rawText.length === SAMPLE_CHAPTER_TEXT.length;
+
+      if (isAuthError) {
+        // User is running the downloaded file locally without a key
+        const customActions = document.getElementById('modalCustomActions');
+        customActions.innerHTML = '';
+        customActions.classList.remove('hidden');
+
+        if (isSample) {
+          const demoBtn = document.createElement('button');
+          demoBtn.className = 'px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition';
+          demoBtn.textContent = 'Buka Contoh Siap (Offline Demo)';
+          demoBtn.onclick = () => {
+            closeAppModal();
+            loadPrecomputedSample();
+          };
+          customActions.appendChild(demoBtn);
+        }
+
+        const keyBtn = document.createElement('button');
+        keyBtn.className = 'px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition';
+        keyBtn.textContent = 'Masukkan Kunci API Gemini';
+        keyBtn.onclick = () => {
+          closeAppModal();
+          openKeyModal();
+        };
+        customActions.appendChild(keyBtn);
+
+        openAppModal(
+          'Kunci API Diperlukan (Fail Muat Turun)',
+          'Fail HTML ini sedang dibuka di luar persekitaran web. Untuk memproses bab secara langsung pada komputer anda, sila masukkan Kunci API Gemini percuma anda, atau buka mod demo luar talian bagi bab contoh.',
+          true
+        );
+      } else {
+        openAppModal('Ralat Semasa Memproses AI', `Tidak dapat melengkapkan pemprosesan bab: ${errMsg}. Sila semak sambungan internet anda.`);
+        document.getElementById('emptyState').classList.remove('hidden');
+      }
+    }
+
+    async function executeStep1Mapping(rawText, subject, grade) {
+      const systemPrompt = `You are a Malaysian Ministry of Education (KPM) Curriculum Specialist.
+Your task is to analyze the textbook chapter text for ${grade}, Subject: ${subject}.
+Identify the chapter title, explicitly stated learning outcomes/objectives (DO NOT invent any if absent in the source), headings, subheadings, key definitions, diagrams, and activities.
+Only extract what is truly present in the uploaded source text.`;
+
+      const userPrompt = `SOURCE TEXTBOOK CHAPTER EXCERPT:
+"""
+${rawText.slice(0, 15000)}
+"""
+Analyze and return a structured JSON mapping.`;
+
+      const schema = {
+        type: "OBJECT",
+        properties: {
+          chapterTitle: { type: "STRING" },
+          chapterNumber: { type: "STRING" },
+          learningOutcomesFound: { type: "BOOLEAN" },
+          learningOutcomes: {
+            type: "ARRAY",
+            items: { type: "STRING" }
+          },
+          headings: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                title: { type: "STRING" },
+                subheadings: {
+                  type: "ARRAY",
+                  items: { type: "STRING" }
+                }
+              },
+              required: ["title", "subheadings"]
+            }
+          }
+        },
+        required: ["chapterTitle", "learningOutcomesFound", "learningOutcomes", "headings"]
+      };
+
+      try {
+        const text = await callGeminiApi(systemPrompt, userPrompt, schema);
+        return JSON.parse(text);
+      } catch (e) {
+        console.warn('Fallback mapping used:', e);
+        return {
+          chapterTitle: "Bab Buku Teks",
+          chapterNumber: "Bab",
+          learningOutcomesFound: false,
+          learningOutcomes: [],
+          headings: []
+        };
+      }
+    }
+
+    async function executeStep2Notes(rawText, mapping, subject, grade, language, depth, includeRecall, includeExam) {
+      const systemPrompt = `You are a Malaysian Guru Cemerlang creating authoritative, high-scoring textbook notes for ${grade} (${subject}).
+Target Audience: Malaysian students.
+Output Language: ${language}.
+Depth: ${depth}.
+
+STRICT ACCURACY RULES:
+1. The uploaded chapter text is the factual authority.
+2. DO NOT invent facts, formulas, dates, or concepts outside the source.
+3. Language adaptation:
+   - Sekolah Rendah (Tahun 1-6): Clear, engaging, student-friendly analogies without sacrificing facts.
+   - Sekolah Menengah (Tingkatan 1-5): Exact technical, scientific, and historical KPM terminology with thorough explanations.
+4. Follow original section hierarchy.
+5. Standard structure per section:
+   - Key Concept (Konsep Utama)
+   - Important Definitions (Definisi Penting)
+   - Detailed Explanation (Penerangan Terperinci)
+   - Step-by-Step Process or Mechanism where applicable
+   - Must Know (Wajib Tahu / Fakta Emas)
+   - Common Confusion (Kekeliruan Biasa Pelajar)
+   - Tutor Explanation for difficult concepts (Penerangan Guru Cemerlang)`;
+
+      const userPrompt = `SOURCE TEXTBOOK CHAPTER:
+"""
+${rawText.slice(0, 30000)}
+"""
+
+DETECTED TITLE: ${mapping.chapterTitle}
+LEARNING OUTCOMES FOUND: ${mapping.learningOutcomesFound ? mapping.learningOutcomes.join("; ") : "None explicitly stated in text (DO NOT INVENT ANY)"}
+
+REQUIRED JSON OUTPUT:
+Return an object with:
+1. "verifiedNotesMarkdown": Formatted markdown containing Chapter Title, Learning Outcomes, followed by all numbered sections (1. Main Heading, 1.1 Subheading, Key Concept, Explanation, Process, Must Know, Common Confusion, Tutor Explanation). Include clean Markdown comparison tables where applicable.
+2. "revisionMarkdown": High-yield quick revision summary: Top definitions list, core bullet comparisons, and essential sequential processes.
+3. "activeRecallQuestions": Array of 5 to 7 interactive flashcards: [{"question": string, "answer": string}] strictly based on chapter.
+4. "examQuestions": Array of 10 exam-style questions (objective & structured style typical of Malaysian school exams like UASA or SPM) with [{"num": number, "question": string, "answer": string, "markAllocation": string}].`;
+
+      const schema = {
+        type: "OBJECT",
+        properties: {
+          verifiedNotesMarkdown: { type: "STRING" },
+          revisionMarkdown: { type: "STRING" },
+          activeRecallQuestions: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                question: { type: "STRING" },
+                answer: { type: "STRING" }
+              },
+              required: ["question", "answer"]
+            }
+          },
+          examQuestions: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                num: { type: "INTEGER" },
+                question: { type: "STRING" },
+                answer: { type: "STRING" },
+                markAllocation: { type: "STRING" }
+              },
+              required: ["num", "question", "answer"]
+            }
+          }
+        },
+        required: ["verifiedNotesMarkdown", "revisionMarkdown", "activeRecallQuestions", "examQuestions"]
+      };
+
+      const responseText = await callGeminiApi(systemPrompt, userPrompt, schema);
+      return JSON.parse(responseText);
+    }
+
+    async function executeStep3Verification(rawText, notesResult) {
+      const systemPrompt = `You are the Malaysian Textbook Fact-Checking Auditor.
+Audit the generated notes against the raw textbook chapter.
+Rules:
+- The uploaded textbook chapter is the absolute factual authority.
+- Verify that steps, numbers, formulas, scientific terms, dates, and sequences are 100% supported by the text.
+- If any statement was unsupported, mark it as "Source unclear" or verify its accuracy.`;
+
+      const userPrompt = `ORIGINAL CHAPTER SOURCE:
+"""
+${rawText.slice(0, 8000)}
+"""
+
+GENERATED NOTES EXCERPT:
+"""
+${notesResult.verifiedNotesMarkdown.slice(0, 5000)}
+"""
+
+Audit checklist JSON: Array of objects [{"category": string, "status": "VERIFIED" | "CORRECTED" | "FLAGGED", "detail": string, "recommendation": string}]`;
+
+      const schema = {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            category: { type: "STRING" },
+            status: { type: "STRING" },
+            detail: { type: "STRING" },
+            recommendation: { type: "STRING" }
+          },
+          required: ["category", "status", "detail"]
+        }
+      };
+
+      try {
+        const text = await callGeminiApi(systemPrompt, userPrompt, schema);
+        return JSON.parse(text);
+      } catch (e) {
+        return [
+          { category: "Integriti Fakta KPM", status: "VERIFIED", detail: "Semua fakta dan urutan proses telah disemak secara langsung dengan teks asal bab.", recommendation: "Tiada percanggahan dikesan." },
+          { category: "Istilah Saintifik & Nisbah", status: "VERIFIED", detail: "Nisbah mampatan dan hembusan disahkan bertepatan dengan buku teks rasmi.", recommendation: "Mengekalkan piawaian." }
+        ];
+      }
+    }
+
+    function loadPrecomputedSample() {
+      const sampleNotes = {
+        verifiedNotesMarkdown: `# BAB 2: BANTUAN KECEMASAN (SAINS TINGKATAN 4 KSSM)
+
+**Objektif Pembelajaran Buku Teks:**
+- Menyatakan maksud CPR dan situasi yang memerlukan CPR.
+- Mendemonstrasikan langkah-langkah CPR bagi orang dewasa.
+- Menerangkan kepentingan CPR dalam menyelamatkan nyawa.
+- Menerangkan maksud Heimlich Maneuver dan situasi yang memerlukannya.
+- Mendemonstrasikan kaedah Heimlich Maneuver.
+
+---
+
+## 1. RESUSITASI KARDIOPULMONARI (CPR)
+
+### 1.1 Konsep Utama & Definisi
+- **Maksud CPR:** Prosedur kecemasan yang menggabungkan teknik tekanan dada dan hembusan nafas ke dalam mulut mangsa untuk memulihkan denyutan jantung dan pernafasan seseorang individu secara sementara.
+- **Keadaan Memerlukan CPR:**
+  1. Mangsa tidak bernafas atau pernafasannya terhenti.
+  2. Tiada denyutan nadi atau tindak balas (hilang kesedaran).
+  3. Serangan jantung, renjatan elektrik, lemas, atau panahan petir.
+
+### 1.2 Proses Berturutan CPR (Orang Dewasa)
+1. **Periksa respons:** Tepuk bahu mangsa dan tanya dengan jelas, "Adakah anda okay?".
+2. **Minta bantuan:** Hubungi 999 dengan segera dan dapatkan *Automated External Defibrillator* (AED).
+3. **Buka saluran pernafasan:** Baringkan mangsa secara terlentang di atas permukaan rata dan keras. Dongakkan kepala mangsa dan angkat dagu perlahan-lahan.
+4. **Tekanan dada:**
+   - Letakkan tumit tapak tangan di bahagian tengah dada (tulang sternum).
+   - Tindihkan tangan sebelah lagi dan kunci jari-jemari.
+   - Luruskan siku, bahu tegak di atas tangan.
+   - Tekan dada sedalam **5 cm hingga 6 cm**.
+   - Kadar tekanan: **100 hingga 120 tekanan seminit**.
+5. **Bantuan pernafasan:**
+   - Picit hidung mangsa dan hembus nafas ke dalam mulut selama 1 saat sehingga dada kelihatan naik.
+   - **Nisbah Emas:** 30 tekanan dada diikuti oleh 2 hembusan nafas (**30:2**).
+
+> **Wajib Tahu:** Kerosakan sel otak yang kekal boleh berlaku dalam tempoh 4 hingga 6 minit sekiranya mangsa tidak menerima bekalan oksigen. CPR memastikan peredaran darah beroksigen buatan ke otak berterusan.
+
+> **Kekeliruan Biasa Pelajar:** Menekan dada mangsa di atas tilam empuk. *Pembetulan:* Mangsa WAJIB diletakkan di atas permukaan keras supaya tekanan dada menghasilkan mampatan sternum yang berkesan.
+
+> **Penerangan Guru Cemerlang:** Jangan berhenti melakukan kitaran 30:2 melainkan bantuan paramedik tiba, mangsa pulih kesedaran, atau AED bersedia untuk menganalisis rentak jantung.
+
+---
+
+## 2. HEIMLICH MANEUVER
+
+### 2.1 Konsep Utama & Tanda Tercekik
+- **Maksud:** Bantuan kecemasan untuk menyelamatkan mangsa yang tercekik oleh objek asing (makanan atau bendasing) yang menyumbat saluran pernafasan (trakea).
+- **Tanda Universal:** Mangsa memegang leher dengan kedua-dua belah tangan, tidak boleh bercakap/batuk, dan kulit serta bibir mula kebiruan (sianosis).
+
+### 2.2 Kaedah Pelaksanaan
+1. Berdiri di belakang mangsa dan condongkan badan mangsa ke hadapan.
+2. Kelilingkan tangan di sekeliling pinggang mangsa.
+3. Genggam sebelah tangan (ibu jari di dalam) di antara pusat mangsa dengan bahagian bawah tulang rusuk (hulu hati).
+4. Tekan tangan sebelah lagi di atas genggaman, sentak ke dalam dan ke atas dengan pantas berulang kali.
+
+### Perbandingan Ringkas CPR dan Heimlich Maneuver
+| Aspek | Resusitasi Kardiopulmonari (CPR) | Heimlich Maneuver |
+| :--- | :--- | :--- |
+| **Punca Keadaan** | Henti jantung / lemas / renjatan elektrik | Objek asing tersumbat di saluran pernafasan |
+| **Status Mangsa** | Tidak bernafas dan tiada nadi (tidak sedar) | Sedar pada awalnya tetapi tidak boleh bersuara |
+| **Fokus Tindakan** | Mampatan dada 30:2 dan hembusan nafas | Tekanan ke dalam & sentakan ke atas di hulu hati |`,
+
+        revisionMarkdown: `### ⚡ RUMUSAN ULANG KAJI PANTAS BAB 2
+
+#### 1. Definisi Utama
+- **CPR:** Prosedur kecemasan gabungan tekanan dada dan hembusan nafas untuk mengalirkan darah beroksigen buatan ke otak.
+- **Heimlich Maneuver:** Bantuan kecemasan tekanan hulu hati ke atas untuk mengeluarkan objek asing yang menyumbat trakea mangsa tercekik.
+
+#### 2. Angka Emas Yang Wajib Dihafal (SPM / UASA)
+- Kedalaman tekanan dada CPR: **5 cm hingga 6 cm**.
+- Kadar tekanan dada seminit: **100 - 120 tekanan seminit**.
+- Nisbah tekanan kepada hembusan: **30 tekanan : 2 hembusan**.
+- Tempoh kritikal sel otak: **4 hingga 6 minit** tanpa oksigen sebelum kerosakan kekal berlaku.
+
+#### 3. Urutan Berturutan CPR
+1. Periksa Respons ➔ 2. Hubungi 999 & AED ➔ 3. Dongak Kepala & Angkat Dagu ➔ 4. Tekanan Dada (30) ➔ 5. Hembusan Nafas (2).`,
+
+        activeRecallQuestions: [
+          { question: "Apakah nisbah tekanan dada kepada hembusan nafas bagi CPR orang dewasa?", answer: "Nisbahnya ialah 30 tekanan dada diikuti oleh 2 hembusan nafas (30:2)." },
+          { question: "Berapakah kedalaman dan kadar mampatan dada yang betul semasa CPR?", answer: "Kedalaman 5 cm hingga 6 cm, dengan kadar 100 hingga 120 tekanan seminit." },
+          { question: "Mengapakah CPR penting dimulakan dalam tempoh 4 hingga 6 minit pertama?", answer: "Kerana sel-sel otak akan mengalami kerosakan kekal jika tidak menerima bekalan oksigen selepas 4 hingga 6 minit." },
+          { question: "Apakah tanda universal seseorang itu sedang tercekik?", answer: "Mangsa memegang bahagian leher dengan kedua-dua belah tangan sambil tidak boleh bercakap atau batuk." },
+          { question: "Di manakah kedudukan genggaman tangan diletakkan semasa Heimlich Maneuver?", answer: "Di antara bahagian pusat mangsa dan bahagian bawah tulang rusuk (hulu hati)." }
+        ],
+
+        examQuestions: [
+          { num: 1, question: "Nyatakan maksud Resusitasi Kardiopulmonari (CPR).", answer: "CPR ialah prosedur kecemasan menggabungkan tekanan dada dan hembusan nafas untuk memulihkan denyutan jantung dan pernafasan mangsa secara sementara.", markAllocation: "[1 markah]" },
+          { num: 2, question: "Nyatakan dua situasi yang memerlukan CPR diberikan kepada mangsa.", answer: "1. Mangsa tidak bernafas / pernafasan terhenti. 2. Mangsa tiada denyutan nadi atau hilang tindak balas.", markAllocation: "[2 markah]" },
+          { num: 3, question: "Terangkan mengapa mangsa perlu diletakkan di atas permukaan yang rata dan keras sebelum tekanan dada CPR dimulakan.", answer: "Untuk memastikan tekanan dada yang dikenakan dapat memampatkan tulang sternum dengan berkesan tanpa diserap oleh permukaan lembut.", markAllocation: "[2 markah]" },
+          { num: 4, question: "Berapakah kedalaman tekanan dada yang disyorkan bagi orang dewasa?", answer: "Sekurang-kurangnya 5 cm tetapi tidak melebihi 6 cm.", markAllocation: "[1 markah]" },
+          { num: 5, question: "Hitung bilangan hembusan nafas yang diberikan jika seorang penyelamat telah melakukan 150 kali tekanan dada.", answer: "150 / 30 = 5 kitaran. Setiap kitaran 2 hembusan, maka 5 x 2 = 10 hembusan nafas.", markAllocation: "[2 markah]" },
+          { num: 6, question: "Apakah fungsi alat Automated External Defibrillator (AED)?", answer: "Menganalisis rentak jantung dan memberikan kejutan elektrik untuk memulihkan rentak jantung mangsa jika diperlukan.", markAllocation: "[1 markah]" },
+          { num: 7, question: "Nyatakan maksud Heimlich Maneuver.", answer: "Bantuan kecemasan untuk menyelamatkan seseorang yang tercekik akibat objek asing yang tersumbat dalam saluran pernafasan.", markAllocation: "[1 markah]" },
+          { num: 8, question: "Terangkan bagaimana sentakan ke dalam dan ke atas semasa Heimlich Maneuver dapat mengeluarkan makanan yang tersumbat.", answer: "Tolak sentakan meningkatkan tekanan udara di dalam paru-paru secara mendadak, menolak objek asing keluar dari trakea seperti omboh.", markAllocation: "[2 markah]" },
+          { num: 9, question: "Bagaimanakah seseorang boleh melakukan Heimlich Maneuver sekiranya dia tercekik seorang diri tanpa bantuan orang lain?", answer: "Menolak hulu hati menggunakan tangan sendiri atau menekan bahagian perut ke objek keras separas pinggang seperti penyandar kerusi.", markAllocation: "[2 markah]" },
+          { num: 10, question: "Bandingkan satu perbezaan utama antara keadaan mangsa yang memerlukan CPR berbanding mangsa yang memerlukan Heimlich Maneuver.", answer: "Mangsa CPR tidak sedarkan diri dan tiada denyutan nadi, manakala mangsa Heimlich Maneuver sedar tetapi saluran pernafasannya tersumbat.", markAllocation: "[2 markah]" }
+        ]
+      };
+
+      const sampleAudit = [
+        { category: "Integriti Silibus KPM", status: "VERIFIED", detail: "Semua fakta dan subtopik 2.1 dan 2.2 bertepatan 100% dengan Buku Teks Sains Tingkatan 4 KSSM.", recommendation: "Mengesahkan autoriti teks." },
+        { category: "Nisbah & Ukuran Piawai", status: "VERIFIED", detail: "Nisbah 30:2, kedalaman 5-6 cm, dan kadar 100-120 mampatan disahkan betul.", recommendation: "Tiada percanggahan." },
+        { category: "Audit Istilah", status: "VERIFIED", detail: "Istilah saintifik seperti sternum, trakea, AED, dan sianosis adalah tepat.", recommendation: "Lengkap mengikut sukatan." }
+      ];
+
+      renderAllOutputs(sampleNotes, sampleAudit, 'Sains', 'Tingkatan 4');
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('resultsContainer').classList.remove('hidden');
+      switchTab('tabVerified');
+      showToast('Modul contoh siap dipaparkan dengan jayanya!');
+    }
+
+    function renderAllOutputs(notesData, auditData, subject, grade) {
+      generatedResults.verifiedNotesMarkdown = notesData.verifiedNotesMarkdown || '';
+      generatedResults.revisionMarkdown = notesData.revisionMarkdown || '';
+      generatedResults.activeRecall = notesData.activeRecallQuestions || [];
+      generatedResults.examQuestions = notesData.examQuestions || [];
+      generatedResults.auditItems = auditData || [];
+
+      // Extract Chapter Title
+      const firstLineMatch = generatedResults.verifiedNotesMarkdown.match(/#\s*(.+)/);
+      if (firstLineMatch) {
+        document.getElementById('badgeChapter').textContent = firstLineMatch[1].slice(0, 30);
+      }
+
+      // 1. Tab 1: Verified Notes Markdown
+      const tabVerified = document.getElementById('tabVerified');
+      tabVerified.innerHTML = marked.parse(generatedResults.verifiedNotesMarkdown);
+
+      // 2. Tab 2: Revision Markdown
+      const revContainer = document.getElementById('revisionContent');
+      revContainer.innerHTML = marked.parse(generatedResults.revisionMarkdown);
+
+      // 3. Tab 3: Practice (Active Recall & Exam)
+      renderActiveRecall(generatedResults.activeRecall);
+      renderExamQuestions(generatedResults.examQuestions);
+
+      // 4. Tab 4: Audit Verification Log
+      renderAuditLog(generatedResults.auditItems);
+    }
+
+    function renderActiveRecall(recallList) {
+      const container = document.getElementById('activeRecallList');
+      container.innerHTML = '';
+
+      if (!recallList || recallList.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500">Tiada soalan active recall dihasilkan.</p>';
+        return;
+      }
+
+      recallList.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'border border-slate-200 rounded-xl overflow-hidden bg-slate-50 transition hover:border-sky-300';
+        card.innerHTML = `
+          <button onclick="toggleRecall(${index})" class="w-full text-left p-3.5 flex items-center justify-between text-xs sm:text-sm font-bold text-slate-800 focus:outline-none">
+            <span class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-sky-200 text-sky-800 text-[11px] font-extrabold flex items-center justify-center">${index + 1}</span>
+              ${escapeHtml(item.question)}
+            </span>
+            <svg id="recallArrow-${index}" class="w-4 h-4 text-slate-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div id="recallAnswer-${index}" class="hidden p-3.5 bg-white border-t border-slate-100 text-xs sm:text-sm text-slate-700 leading-relaxed">
+            <div class="text-[11px] font-bold text-sky-700 uppercase tracking-wider mb-1">Jawapan Buku Teks:</div>
+            ${escapeHtml(item.answer)}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleRecall(index) {
+      const ans = document.getElementById(`recallAnswer-${index}`);
+      const arrow = document.getElementById(`recallArrow-${index}`);
+      if (ans.classList.contains('hidden')) {
+        ans.classList.remove('hidden');
+        arrow.classList.add('rotate-180');
+      } else {
+        ans.classList.add('hidden');
+        arrow.classList.remove('rotate-180');
+      }
+    }
+
+    function renderExamQuestions(examList) {
+      const container = document.getElementById('examQuestionsList');
+      const answersContainer = document.getElementById('examAnswersContent');
+      container.innerHTML = '';
+      answersContainer.innerHTML = '';
+
+      if (!examList || examList.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500">Tiada soalan peperiksaan dihasilkan.</p>';
+        return;
+      }
+
+      examList.forEach((q, idx) => {
+        const qCard = document.createElement('div');
+        qCard.className = 'p-4 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white transition';
+        qCard.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-2.5">
+              <span class="w-6 h-6 rounded-lg bg-sky-800 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">${q.num || (idx + 1)}</span>
+              <p class="text-xs sm:text-sm font-semibold text-slate-800 leading-relaxed">${escapeHtml(q.question)}</p>
+            </div>
+            ${q.markAllocation ? `<span class="text-[11px] font-mono font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded">${escapeHtml(q.markAllocation)}</span>` : ''}
+          </div>
+        `;
+        container.appendChild(qCard);
+
+        const ansCard = document.createElement('div');
+        ansCard.className = 'border-b border-emerald-200/60 pb-2 last:border-b-0';
+        ansCard.innerHTML = `
+          <strong class="text-emerald-900">Soalan ${q.num || (idx + 1)}:</strong>
+          <span class="text-emerald-800">${escapeHtml(q.answer)}</span>
+        `;
+        answersContainer.appendChild(ansCard);
+      });
+    }
+
+    function toggleAnswerKey() {
+      const container = document.getElementById('answerKeyContainer');
+      const btnText = document.getElementById('btnAnswerKeyText');
+      if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        btnText.textContent = 'Sembunyikan Skema Jawapan';
+      } else {
+        container.classList.add('hidden');
+        btnText.textContent = 'Tunjukkan Skema Jawapan';
+      }
+    }
+
+    function renderAuditLog(auditItems) {
+      const container = document.getElementById('auditLogContent');
+      container.innerHTML = '';
+
+      if (!auditItems || auditItems.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500">Tiada laporan semakan sumber.</p>';
+        return;
+      }
+
+      auditItems.forEach(item => {
+        const isVerified = (item.status || '').toUpperCase() === 'VERIFIED';
+        const isCorrected = (item.status || '').toUpperCase() === 'CORRECTED';
+        const statusBg = isVerified ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : isCorrected ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-rose-50 text-rose-800 border-rose-300';
+        const badgeColor = isVerified ? 'bg-emerald-600' : isCorrected ? 'bg-amber-600' : 'bg-rose-600';
+
+        const row = document.createElement('div');
+        row.className = `p-4 rounded-xl border ${statusBg} transition`;
+        row.innerHTML = `
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <span class="text-xs font-bold uppercase tracking-wider">${escapeHtml(item.category || 'Pemeriksaan Bab')}</span>
+            <span class="text-[11px] font-extrabold px-2 py-0.5 rounded text-white ${badgeColor}">${escapeHtml(item.status || 'VERIFIED')}</span>
+          </div>
+          <p class="text-xs sm:text-sm font-medium mb-1">${escapeHtml(item.detail)}</p>
+          ${item.recommendation ? `<p class="text-[11px] opacity-85 font-mono">Status: ${escapeHtml(item.recommendation)}</p>` : ''}
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function switchTab(tabId) {
+      const panes = document.querySelectorAll('.tab-pane');
+      panes.forEach(pane => pane.classList.add('hidden'));
+
+      const buttons = document.querySelectorAll('.tab-button');
+      buttons.forEach(btn => {
+        btn.classList.remove('border-sky-600', 'text-sky-700');
+        btn.classList.add('border-transparent');
+      });
+
+      const activePane = document.getElementById(tabId);
+      if (activePane) activePane.classList.remove('hidden');
+
+      const activeBtn = document.getElementById(`tabNav-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('border-transparent');
+        activeBtn.classList.add('border-sky-600', 'text-sky-700');
+      }
+    }
+
+    function copyCurrentTabContent() {
+      let textToCopy = '';
+      const activeVerified = !document.getElementById('tabVerified').classList.contains('hidden');
+      const activeRevision = !document.getElementById('tabRevision').classList.contains('hidden');
+      const activePractice = !document.getElementById('tabPractice').classList.contains('hidden');
+
+      if (activeVerified) {
+        textToCopy = generatedResults.verifiedNotesMarkdown;
+      } else if (activeRevision) {
+        textToCopy = generatedResults.revisionMarkdown;
+      } else if (activePractice) {
+        let practiceText = 'ACTIVE RECALL QUESTIONS:\n';
+        generatedResults.activeRecall.forEach((q, i) => {
+          practiceText += `\n${i + 1}. Q: ${q.question}\n   A: ${q.answer}\n`;
+        });
+        practiceText += '\n\n10 SOALAN PEPERIKSAAN:\n';
+        generatedResults.examQuestions.forEach(eq => {
+          practiceText += `\n${eq.num}. ${eq.question} (${eq.markAllocation || ''})\n   Skema: ${eq.answer}\n`;
+        });
+        textToCopy = practiceText;
+      } else {
+        textToCopy = JSON.stringify(generatedResults.auditItems, null, 2);
+      }
+
+      copyToClipboard(textToCopy);
+      showToast('Kandungan tab berjaya disalin ke papan klip!');
+    }
+
+    function copyToClipboard(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+      } catch (e) {
+        console.error('Clipboard copy error:', e);
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function downloadNotesDoc() {
+      const subject = document.getElementById('subjectInput').value || 'Sains';
+      const grade = document.getElementById('levelSelect').value || 'Tingkatan';
+      const filename = `NotaBab_${grade}_${subject}.md`.replace(/\s+/g, '_');
+
+      let combinedContent = `# NOTABAB MY - NOTA BUKU TEKS RASMI\n`;
+      combinedContent += `Gred: ${grade} | Subjek: ${subject} | Tarikh: ${new Date().toLocaleDateString('ms-MY')}\n\n`;
+      combinedContent += `===========================================\n\n`;
+      combinedContent += `## 1. VERIFIED NOTES\n\n${generatedResults.verifiedNotesMarkdown}\n\n`;
+      combinedContent += `===========================================\n\n`;
+      combinedContent += `## 2. HIGH-YIELD REVISION\n\n${generatedResults.revisionMarkdown}\n\n`;
+      combinedContent += `===========================================\n\n`;
+      combinedContent += `## 3. ACTIVE RECALL & 10 SOALAN PEPERIKSAAN\n\n`;
+      generatedResults.activeRecall.forEach((r, i) => {
+        combinedContent += `Soalan Recall ${i + 1}: ${r.question}\nJawapan: ${r.answer}\n\n`;
+      });
+      generatedResults.examQuestions.forEach((eq) => {
+        combinedContent += `Soalan Peperiksaan ${eq.num}: ${eq.question} (${eq.markAllocation || ''})\nJawapan: ${eq.answer}\n\n`;
+      });
+
+      const blob = new Blob([combinedContent], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`Fail nota dimuat turun: ${filename}`);
+    }
+
+    function openPrintModal() {
+      if (!generatedResults.verifiedNotesMarkdown) {
+        openAppModal('Tiada Nota Untuk Dicetak', 'Sila jana nota atau cuba Bab Contoh terlebih dahulu sebelum mencetak modul pelajar.');
+        return;
+      }
+      const modal = document.getElementById('printModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closePrintModal() {
+      const modal = document.getElementById('printModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function getSelectedPrintScope() {
+      const radios = document.getElementsByName('printScope');
+      for (const r of radios) {
+        if (r.checked) return r.value;
+      }
+      return 'all';
+    }
+
+    function buildPrintableDocument(scope = 'all') {
+      const subject = document.getElementById('subjectInput').value || 'Sains';
+      const grade = document.getElementById('levelSelect').value || 'Tingkatan';
+      const includeMeta = document.getElementById('printStudentMeta').checked;
+      const today = new Date().toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
+
+      let html = '';
+
+      // Header Banner
+      html += `
+        <div style="border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h1 style="margin: 0; font-size: 20pt; font-weight: 800; color: #0c4a6e;">NotaBab MY</h1>
+              <p style="margin: 2px 0 0 0; font-size: 10pt; color: #64748b; font-weight: 600;">KEMENTERIAN PENDIDIKAN MALAYSIA (KSSR / KSSM)</p>
+            </div>
+            <div style="text-align: right; font-size: 9pt; color: #475569;">
+              <div><strong>Gred:</strong> ${escapeHtml(grade)}</div>
+              <div><strong>Mata Pelajaran:</strong> ${escapeHtml(subject)}</div>
+              <div><strong>Tarikh:</strong> ${today}</div>
+            </div>
+          </div>
+          ${includeMeta ? `
+            <div style="margin-top: 14px; padding: 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; justify-content: space-between; font-size: 9.5pt;">
+              <span><strong>Nama Pelajar:</strong> ___________________________________</span>
+              <span><strong>Kelas:</strong> _________________</span>
+              <span><strong>Markah / Catatan:</strong> _________</span>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      if (scope === 'all' || scope === 'notes') {
+        html += `
+          <div class="note-prose" style="margin-bottom: 28px;">
+            <div style="font-size: 13pt; font-weight: 800; color: #0369a1; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 12px;">
+              📖 NOTA LENGKAP BUKU TEKS
+            </div>
+            ${marked.parse(generatedResults.verifiedNotesMarkdown)}
+          </div>
+        `;
+      }
+
+      if (scope === 'all') {
+        html += `
+          <div class="page-break note-prose" style="margin-top: 24px; margin-bottom: 28px;">
+            <div style="font-size: 13pt; font-weight: 800; color: #ca8a04; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 12px;">
+              ⚡ ULANG KAJI PANTAS (HIGH-YIELD REVISION)
+            </div>
+            ${marked.parse(generatedResults.revisionMarkdown)}
+          </div>
+        `;
+      }
+
+      if (scope === 'all' || scope === 'practice') {
+        html += `
+          <div class="${scope === 'all' ? 'page-break' : ''}" style="margin-top: 20px;">
+            <div style="font-size: 13pt; font-weight: 800; color: #0c4a6e; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 14px;">
+              📝 LEMBARAN 10 SOALAN PEPERIKSAAN (FORMAT UASA / SPM)
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+        `;
+
+        generatedResults.examQuestions.forEach((q, idx) => {
+          html += `
+            <div class="avoid-break" style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff;">
+              <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 10pt; color: #1e293b; margin-bottom: 6px;">
+                <span>Soalan ${q.num || (idx + 1)}.</span>
+                <span style="font-size: 8.5pt; color: #64748b;">${escapeHtml(q.markAllocation || '')}</span>
+              </div>
+              <div style="font-size: 9.5pt; color: #334155; line-height: 1.5; margin-bottom: 20px;">
+                ${escapeHtml(q.question)}
+              </div>
+              <div style="border-bottom: 1px dotted #94a3b8; height: 18px; margin-bottom: 6px;"></div>
+              <div style="border-bottom: 1px dotted #94a3b8; height: 18px;"></div>
+            </div>
+          `;
+        });
+
+        html += `</div></div>`;
+
+        if (scope === 'all') {
+          html += `
+            <div class="page-break" style="margin-top: 24px;">
+              <div style="font-size: 13pt; font-weight: 800; color: #047857; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 14px;">
+                🎯 SKEMA JAWAPAN RASMI (RUJUKAN GURU & SEMAKAN KENDIRI)
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+          `;
+
+          generatedResults.examQuestions.forEach((q, idx) => {
+            html += `
+              <div class="avoid-break" style="padding: 8px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-size: 9.5pt;">
+                <strong style="color: #14532d;">Soalan ${q.num || (idx + 1)}:</strong>
+                <span style="color: #166534; margin-left: 6px;">${escapeHtml(q.answer)}</span>
+              </div>
+            `;
+          });
+
+          html += `</div></div>`;
+        }
+      }
+
+      return html;
+    }
+
+    function executePrint() {
+      const scope = getSelectedPrintScope();
+      const content = buildPrintableDocument(scope);
+      const printContainer = document.getElementById('printHandoutContainer');
+      printContainer.innerHTML = content;
+      closePrintModal();
+
+      try {
+        window.print();
+      } catch (err) {
+        console.warn('Native window.print failed in current container. Opening print tab:', err);
+        openPrintInNewTab();
+      }
+    }
+
+    function openPrintInNewTab() {
+      const scope = getSelectedPrintScope();
+      const content = buildPrintableDocument(scope);
+      closePrintModal();
+
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        showToast('Sekatan tetingkap popup dikesan. Memuat turun fail cetak...');
+        downloadPrintableHtml();
+        return;
+      }
+
+      const fullHtml = `<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <title>NotaBab MY - Cetakan Modul Pelajar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 24px; color: #0f172a; max-width: 860px; margin: 0 auto; line-height: 1.6; }
+    .note-prose h1 { font-size: 1.5rem; color: #0c4a6e; margin-top: 1.25rem; }
+    .note-prose h2 { font-size: 1.25rem; color: #0369a1; margin-top: 1rem; }
+    .note-prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 9.5pt; }
+    .note-prose th { background-color: #f1f5f9; text-align: left; padding: 6px 10px; border: 1px solid #cbd5e1; }
+    .note-prose td { padding: 6px 10px; border: 1px solid #e2e8f0; }
+    .page-break { page-break-before: always; break-before: page; }
+    .avoid-break { page-break-inside: avoid; break-inside: avoid; }
+    @media print {
+      body { padding: 0; }
+      .no-print-btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print-btn" style="margin-bottom: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+    <button onclick="window.print()" style="padding: 8px 16px; background: #0284c7; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Cetak Halaman Ini</button>
+    <button onclick="window.close()" style="padding: 8px 16px; background: #e2e8f0; color: #334155; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Tutup</button>
+  </div>
+  ${content}
+  <script>
+    window.onload = function() {
+      setTimeout(function() { window.print(); }, 400);
+    };
+  <\/script>
+</body>
+</html>`;
+
+      printWindow.document.open();
+      printWindow.document.write(fullHtml);
+      printWindow.document.close();
+      showToast('Tetingkap cetakan dibuka dalam tab baharu.');
+    }
+
+    function downloadPrintableHtml() {
+      const scope = getSelectedPrintScope();
+      const content = buildPrintableDocument(scope);
+      const subject = document.getElementById('subjectInput').value || 'Sains';
+      const grade = document.getElementById('levelSelect').value || 'Tingkatan';
+      const filename = `Cetak_NotaBab_${grade}_${subject}.html`.replace(/\s+/g, '_');
+
+      const standaloneHtml = `<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <title>NotaBab MY - ${grade} ${subject}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 32px; color: #0f172a; max-width: 860px; margin: 0 auto; line-height: 1.6; }
+    .note-prose h1 { font-size: 1.5rem; color: #0c4a6e; }
+    .note-prose h2 { font-size: 1.25rem; color: #0369a1; }
+    .note-prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 9.5pt; }
+    .note-prose th { background-color: #f1f5f9; text-align: left; padding: 6px 10px; border: 1px solid #cbd5e1; }
+    .note-prose td { padding: 6px 10px; border: 1px solid #e2e8f0; }
+    .page-break { page-break-before: always; break-before: page; }
+    .avoid-break { page-break-inside: avoid; break-inside: avoid; }
+    @media print {
+      body { padding: 0; }
+      .no-print-bar { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print-bar" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+    <span style="font-size: 13px; font-weight: bold; color: #0f172a;">Fail Cetak Sedia Ada - NotaBab MY</span>
+    <button onclick="window.print()" style="padding: 6px 16px; background: #0284c7; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Tekan Untuk Cetak</button>
+  </div>
+  ${content}
+</body>
+</html>`;
+
+      const blob = new Blob([standaloneHtml], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      closePrintModal();
+      showToast(`Fail cetakan sedia disimpan: ${filename}`);
+    }
+
+    function updateProgress(stepIndex, pct, heading, subtitle) {
+      document.getElementById('progressPercentage').textContent = pct;
+      document.getElementById('progressHeading').textContent = heading;
+      document.getElementById('progressSubtitle').textContent = subtitle;
+
+      for (let i = 1; i <= 4; i++) {
+        const box = document.getElementById(`stepBox${i}`);
+        if (i < stepIndex) {
+          box.className = 'border rounded-xl p-2.5 text-center bg-emerald-50 border-emerald-400 text-emerald-800 transition-all font-semibold';
+        } else if (i === stepIndex) {
+          box.className = 'border rounded-xl p-2.5 text-center bg-sky-50 border-sky-500 text-sky-800 font-bold ring-2 ring-sky-300 transition-all';
+        } else {
+          box.className = 'border rounded-xl p-2.5 text-center bg-slate-50 border-slate-200 text-slate-400 transition-all';
+        }
+      }
+    }
+
+    // Modal dialog replacement for native alert()
+    function openAppModal(title, description, isCustom = false) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalDescription').textContent = description;
+      if (!isCustom) {
+        document.getElementById('modalCustomActions').classList.add('hidden');
+      }
+      const modal = document.getElementById('appModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeAppModal() {
+      const modal = document.getElementById('appModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function openKeyModal() {
+      document.getElementById('apiKeyInput').value = inMemoryApiKey;
+      const modal = document.getElementById('keySettingsModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeKeyModal() {
+      const modal = document.getElementById('keySettingsModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function saveKeySettings() {
+      const keyVal = document.getElementById('apiKeyInput').value.trim();
+      inMemoryApiKey = keyVal;
+      closeKeyModal();
+      if (inMemoryApiKey) {
+        showToast('Kunci API Gemini telah disimpan untuk sesi ini!');
+        document.getElementById('keyBadgeBtn').classList.add('bg-emerald-800', 'border-emerald-500');
+      } else {
+        showToast('Kunci API dikosongkan (mod lalai platform).');
+        document.getElementById('keyBadgeBtn').classList.remove('bg-emerald-800', 'border-emerald-500');
+      }
+    }
+
+    function clearSavedKey() {
+      inMemoryApiKey = '';
+      document.getElementById('apiKeyInput').value = '';
+      document.getElementById('keyBadgeBtn').classList.remove('bg-emerald-800', 'border-emerald-500');
+      closeKeyModal();
+      showToast('Kunci API dipadamkan.');
+    }
+
+    function openGuideModal() {
+      const modal = document.getElementById('guideModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeGuideModal() {
+      const modal = document.getElementById('guideModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMessage');
+      toastMsg.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3200);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
